@@ -96,5 +96,15 @@ namespace OaktreeLab.PetiteMonitor {
             }
             return accessor.ReadByte( 4 + index );
         }
+
+        /// <summary>
+        /// ユーザー拡張データ
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public byte this[ int index ] {
+            get => ReadValue( index );
+            set => WriteValue( index, value );
+        }
     }
 }

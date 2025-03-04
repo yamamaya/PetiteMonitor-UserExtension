@@ -25,7 +25,7 @@ namespace PetiteMonitor_UserExtension_CS {
                     value = 0;
                 }
                 Console.WriteLine( $"Writing {value}" );
-                monitor.WriteValue( 0, value );
+                monitor[0] = value;
                 state = !state;
 
                 // 1秒待つ
