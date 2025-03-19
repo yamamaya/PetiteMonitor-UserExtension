@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO.MemoryMappedFiles;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OaktreeLab.PetiteMonitor {
     public class PetiteMonitorLib : IDisposable {
@@ -31,8 +27,23 @@ namespace OaktreeLab.PetiteMonitor {
         /// <summary>
         /// PetiteMonitorに接続します。
         /// </summary>
-        /// <exception cref="ApplicationException"></exception>
+        /// <remarks>
+        /// 無制限に再試行します。
+        /// </remarks>
+        /// <exception cref="ApplicationException">接続に失敗した場合</exception>
         public void Connect() {
+            Connect( null );
+        }
+
+        /// <summary>
+        /// PetiteMonitorに接続します。
+        /// </summary>
+        /// <remarks>
+        /// 再試行回数を指定することができます。1回1秒、nullの場合は無制限に再試行。
+        /// </remarks>
+        /// <param name="retryAttempts">再試行回数(nullまたは0以上の整数)</param>
+        /// <exception cref="ApplicationException">接続に失敗した場合</exception>
+        public void Connect( int? retryAttempts ) {
             if ( accessor != null ) {
                 throw new ApplicationException( "Already connected" );
             }
@@ -42,12 +53,17 @@ namespace OaktreeLab.PetiteMonitor {
 
             // メモリーマップトファイルを開く
             MemoryMappedFile? mmf = null;
+            int attemptCount = 0;
             while ( mmf == null ) {
                 try {
                     mmf = MemoryMappedFile.OpenExisting( nameMMF, MemoryMappedFileRights.ReadWrite );
                 } catch ( FileNotFoundException ) {
-                    // 見つからない場合は500ms待って再試行
-                    Thread.Sleep( 500 );
+                    // 見つからない場合は1s待って再試行
+                    attemptCount++;
+                    if ( retryAttempts != null && attemptCount > retryAttempts ) {
+                        throw new ApplicationException( "MemoryMappedFile not found" );
+                    }
+                    Thread.Sleep( 1000 );
                 }
             }
 
@@ -70,13 +86,17 @@ namespace OaktreeLab.PetiteMonitor {
         /// </summary>
         /// <remarks>
         /// indexは0から3までの値を指定します。
+        /// valueはデジタルの場合は0か0以外の値、アナログの場合は0から100の値を指定します。
         /// </remarks>
-        /// <param name="index"></param>
-        /// <param name="value"></param>
+        /// <param name="index">0から3のインデックス</param>
+        /// <param name="value">デジタルの場合は0か0以外、アナログの場合は0から100</param>
         /// <exception cref="ApplicationException"></exception>
         public void WriteValue( int index, byte value ) {
             if ( accessor == null ) {
                 throw new ApplicationException( "Not connected" );
+            }
+            if ( index < 0 || index > 3 ) {
+                throw new IndexOutOfRangeException( "Index out of range" );
             }
             accessor.Write( 4 + index, value );
         }
@@ -87,7 +107,7 @@ namespace OaktreeLab.PetiteMonitor {
         /// <remarks>
         /// indexは0から3までの値を指定します。
         /// </remarks>
-        /// <param name="index"></param>
+        /// <param name="index">0から3のインデックス</param>
         /// <returns></returns>
         /// <exception cref="ApplicationException"></exception>
         public byte ReadValue( int index ) {

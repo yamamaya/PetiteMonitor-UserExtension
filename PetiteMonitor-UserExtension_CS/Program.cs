@@ -1,5 +1,5 @@
-﻿using OaktreeLab.PetiteMonitor;
-using System.IO.MemoryMappedFiles;
+﻿using System;
+using OaktreeLab.PetiteMonitor;
 
 namespace PetiteMonitor_UserExtension_CS {
     internal class Program {

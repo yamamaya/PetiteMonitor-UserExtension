@@ -1,4 +1,4 @@
-# PetiteMonitorLib.py
+﻿# PetiteMonitorLib.py
 import ctypes
 import time
 import struct
@@ -59,74 +59,143 @@ kernel32.CloseHandle.errcheck = errcheck_bool
 kernel32.CloseHandle.argtypes = (HANDLE,)
 
 class PetiteMonitor:
-    # �R���X�g���N�^
+    # コンストラクタ
     def __init__(self):
+        """
+        PetiteMonitorインスタンスを初期化します。
+        """
         self.__mmf = None
         self.__pBuf = None
 
-    # PetiteMonitor�Ɛڑ�
-    def connect(self):
-        # �������}�b�v�x�t�@�C���̖��O
+    # PetiteMonitorと接続
+    def connect(self, retry_attempts=None):
+        """
+        PetiteMonitorのメモリマップドファイルに接続します。
+        
+        引数:
+            retry_attempts (int, optional): 試行回数(1回1秒)。指定しない場合は無限に試行します。
+        
+        例外:
+            Exception: 接続に失敗した場合。
+        """
+        # メモリマップドファイルの名前
         nameMMF = "PetiteMonitorUserExtension"
+        # リトライ回数
+        attempts = 0
 
-        # �������}�b�v�h�t�@�C�����J��(��������܂ŌJ��Ԃ�)
+        # メモリマップドファイルを開く(成功するか試行回数を超えるまで)
         while self.__mmf is None:
             try:
-                # �������}�b�v�h�t�@�C�����������[�h�ŊJ��
+                # メモリマップドファイルを既存モードで開く
                 hMap = kernel32.OpenFileMappingW(FILE_MAP_READ | FILE_MAP_WRITE, False, nameMMF)
                 if not hMap:
                     raise FileNotFoundError("Could not open file mapping")
 
-                # �������}�b�v�h�t�@�C���̃r���[���������Ƀ}�b�v����
+                # メモリマップドファイルのビューをメモリにマップする
                 self.__pBuf = kernel32.MapViewOfFile(hMap, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0)
                 if not self.__pBuf:
                     raise OSError("Could not map view of file")
 
-                # �������}�b�v�h�t�@�C�������(�����s�v)
+                # メモリマップドファイルを閉じる(もう不要)
                 kernel32.CloseHandle(hMap)
 
-                # �������}�b�v�h�t�@�C���̏����擾
+                # メモリマップドファイルの情報を取得
                 mbi = MEMORY_BASIC_INFORMATION()
                 kernel32.VirtualQuery(self.__pBuf, byref(mbi), 128)
 
-                # �������}�b�v�h�t�@�C���̃A�h���X���擾
+                # メモリマップドファイルのアドレスを取得
                 self.__mmf = (c_char * mbi.RegionSize).from_address(self.__pBuf)
 
-                # �V�O�l�`�����m�F
+                # シグネチャを確認
                 signature = struct.unpack('I', self.__mmf[0:4])[0]
                 if signature != 0x2141594E:
                     raise Exception("Signature mismatch")
 
             except FileNotFoundError:
-                # �������}�b�v�h�t�@�C�������݂��Ȃ��ꍇ�́A0.5�b�҂��čĎ��s
-                time.sleep(0.5)
+                # メモリマップドファイルが存在しない場合は、1秒待って再試行
+                attempts += 1
+                if retry_attempts is not None and attempts > retry_attempts:
+                    raise Exception("Exceeded maximum retry attempts")
+                time.sleep(1)
 
             except Exception as e:
-                # ���̑��̃G���[�̏ꍇ�͗�O�𑗏o
+                # その他のエラーの場合は例外を送出
                 raise e
 
-    # PetiteMonitor�Ɛؒf
+    # PetiteMonitorと切断
     def disconnect(self):
-        # �r���[�����
+        """
+        PetiteMonitorのメモリマップドファイルから切断します。
+        """
+        # ビューを閉じる
         if self.__pBuf:
             kernel32.UnmapViewOfFile(cast(self.__pBuf, LPVOID))
 
-    # �o�C�g�P�ʂœǂݎ��
+    # ユーザー拡張データを読み込む
     def read_byte(self, index):
+        """
+        ユーザー拡張データのバイトを読み込みます。
+        
+        引数:
+            index (int): ユーザー拡張データのインデックス (0-3)。
+        
+        戻り値:
+            int: 指定されたインデックスのバイト値。
+        
+        例外:
+            Exception: メモリマップドファイルに接続されていない場合。
+            ValueError: インデックスが範囲外
+        """
+        # メモリマップドファイルに接続されているか確認
         if self.__mmf is None:
             raise Exception("Not connected to memory-mapped file")
+        # インデックスの範囲を確認
+        if index < 0 or index > 3:
+            raise ValueError("Index out of range")
+        # 読み込み
         return self.__mmf[4 + index]
 
-    # �o�C�g�P�ʂŏ�������
+    # ユーザー拡張データを書き込む
     def write_byte(self, index, value):
+        """
+        ユーザー拡張データのバイトを書き込みます。
+        
+        引数:
+            index (int): ユーザー拡張データのインデックス (0-3)。
+            value (int): 書き込む値 (デジタルの場合は0または0以外、アナログの場合は0-100)。
+        
+        例外:
+            Exception: メモリマップドファイルに接続されていない場合。
+            ValueError: インデックスまたは値が範囲外
+        """
+        # メモリマップドファイルに接続されているか確認
         if self.__mmf is None:
             raise Exception("Not connected to memory-mapped file")
+        # インデックスと値の範囲を確認
+        if index < 0 or index > 3:
+            raise ValueError("Index out of range")
+        if value < 0 or value > 255:
+            raise ValueError("Value out of range")
+        # 書き込み
         self.__mmf[4 + index] = value
 
-    # with���̂��߂�
+    # with文のために
     def __enter__(self):
-        self.connect()
+        """
+        このオブジェクトに関連するランタイムコンテキストに入ります。
+        
+        戻り値:
+            PetiteMonitor: PetiteMonitorインスタンス。
+        """
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """
+        このオブジェクトに関連するランタイムコンテキストから退出します。
+        
+        引数:
+            exc_type (type): 例外の型。
+            exc_value (Exception): 例外のインスタンス。
+            traceback (traceback): トレースバックオブジェクト。
+        """
         self.disconnect()

@@ -13,7 +13,7 @@ public:
     /// <summary>
     /// PetiteMonitorに接続
     /// </summary>
-    void Connect();
+    void Connect( int retryAttempts = -1 );
 
     /// <summary>
     /// PetiteMonitorから切断
@@ -25,6 +25,7 @@ public:
     /// </summary>
     /// <remarks>
     /// indexは0から3までの値を指定します。
+    /// valueはデジタルの場合0または0以外、アナログの場合0から100までの値を指定します。
     /// </remarks>
     /// <param name="index"></param>
     /// <param name="value"></param>

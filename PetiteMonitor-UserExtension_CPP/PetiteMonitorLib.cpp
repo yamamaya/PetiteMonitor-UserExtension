@@ -5,15 +5,18 @@
 #include <memory>
 #include "PetiteMonitorLib.h"
 
+// コンストラクタ
 PetiteMonitorLib::PetiteMonitorLib() {
     pBuf = nullptr;
 }
 
+// デストラクタ
 PetiteMonitorLib::~PetiteMonitorLib() {
     Disconnect();
 }
 
-void PetiteMonitorLib::Connect() {
+// PetiteMonitorに接続
+void PetiteMonitorLib::Connect( int retryAttempts ) {
     // 既に接続済みの場合は例外を投げる
     if ( pBuf != nullptr ) {
         throw std::runtime_error( "Already connected" );
@@ -25,17 +28,23 @@ void PetiteMonitorLib::Connect() {
     // メモリーマップドファイルのハンドル
     HANDLE hMapFile = NULL;
 
-    // スコープガード
+    // hMapFileのスコープガード
     std::unique_ptr<void, decltype( &CloseHandle )> hMapFileGuard( hMapFile, CloseHandle );
+    // pBufのスコープガード
     auto pBufDeleter = [ this ]( uint8_t* ) { this->Disconnect(); };
     std::unique_ptr<uint8_t, decltype( pBufDeleter )> pBufGuard( pBuf, pBufDeleter );
 
     // メモリーマップトファイルを開く
+    int retryCount = 0;
     while ( hMapFile == NULL ) {
         hMapFile = OpenFileMappingA( FILE_MAP_READ | FILE_MAP_WRITE, FALSE, nameMMF );
         if ( hMapFile == NULL ) {
-            // 見つからない場合は500ms待って再試行
-            std::this_thread::sleep_for( std::chrono::milliseconds( 500 ) );
+            // 見つからない場合は1s待って再試行
+            retryCount++;
+            if ( retryAttempts >= 0 && retryCount > retryAttempts ) {
+                throw std::runtime_error( "Could not open file mapping" );
+            }
+            std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) );
         }
     }
 
@@ -59,6 +68,7 @@ void PetiteMonitorLib::Connect() {
     pBufGuard.release();
 }
 
+// PetiteMonitorから切断
 void PetiteMonitorLib::Disconnect() {
     if ( pBuf != nullptr ) {
         UnmapViewOfFile( pBuf );
@@ -66,6 +76,7 @@ void PetiteMonitorLib::Disconnect() {
     }
 }
 
+// ユーザー拡張データを書き込み
 void PetiteMonitorLib::WriteValue( int index, uint8_t value ) {
     if ( pBuf == nullptr ) {
         throw std::runtime_error( "Not connected" );
@@ -73,6 +84,7 @@ void PetiteMonitorLib::WriteValue( int index, uint8_t value ) {
     pBuf[ index + 4 ] = value;
 }
 
+// ユーザー拡張データを読み込み
 uint8_t PetiteMonitorLib::ReadValue( int index ) {
     if ( pBuf == nullptr ) {
         throw std::runtime_error( "Not connected" );

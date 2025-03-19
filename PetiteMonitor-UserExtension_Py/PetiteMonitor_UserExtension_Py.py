@@ -1,4 +1,4 @@
-# PetiteMonitor_UserExtension_Py.py
+ï»¿# PetiteMonitor_UserExtension_Py.py
 import time
 import msvcrt
 from PetiteMonitorLib import PetiteMonitor
@@ -6,21 +6,22 @@ from PetiteMonitorLib import PetiteMonitor
 def main():
     print("PetiteMonitor User Extension Python sample")
 
-    # PetiteMonitor‚ÉÚ‘±
     with PetiteMonitor() as monitor:
+        # PetiteMonitorã«æ¥ç¶š
+        monitor.connect( 0 )
         print("Connected to PetiteMonitor successfully")
         print("Press any key to exit")
 
-        # ƒL[‚ª‰Ÿ‚³‚ê‚é‚Ü‚ÅLED‚ğ“_–Å‚³‚¹‚é
+        # ã‚­ãƒ¼ãŒæŠ¼ã•ã‚Œã‚‹ã¾ã§LEDã‚’ç‚¹æ»…ã•ã›ã‚‹
         state = False
         while not msvcrt.kbhit():
-            # ó‘Ô’l‚ğ‘‚«‚Ş(100‚Æ0‚ğŒğŒİ‚É‘‚«‚Ş)
+            # çŠ¶æ…‹å€¤ã‚’æ›¸ãè¾¼ã‚€(100ã¨0ã‚’äº¤äº’ã«æ›¸ãè¾¼ã‚€)
             value = 100 if state else 0
             print(f"Writing {value}")
             monitor.write_byte(0, value)
             state = not state
 
-            # 1•b‘Ò‚Â
+            # 1ç§’å¾…ã¤
             time.sleep(1)
 
 if __name__ == "__main__":
