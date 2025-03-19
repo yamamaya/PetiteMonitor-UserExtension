@@ -1,9 +1,9 @@
-#pragma once
+ï»¿#pragma once
 
 #include <stdint.h>
 
 /// <summary>
-/// PetiteMonitorƒ†[ƒU[Šg’£ƒ‰ƒCƒuƒ‰ƒŠ
+/// PetiteMonitorãƒ¦ãƒ¼ã‚¶ãƒ¼æ‹¡å¼µãƒ©ã‚¤ãƒ–ãƒ©ãƒª
 /// </summary>
 class PetiteMonitorLib {
 public:
@@ -11,31 +11,31 @@ public:
     virtual ~PetiteMonitorLib();
 
     /// <summary>
-    /// PetiteMonitor‚ÉÚ‘±
+    /// PetiteMonitorã«æ¥ç¶š
     /// </summary>
     void Connect( int retryAttempts = -1 );
 
     /// <summary>
-    /// PetiteMonitor‚©‚çØ’f
+    /// PetiteMonitorã‹ã‚‰åˆ‡æ–­
     /// </summary>
     void Disconnect();
 
     /// <summary>
-    /// ƒ†[ƒU[Šg’£ƒf[ƒ^‚ğ‘‚«‚İ‚Ü‚·B
+    /// ãƒ¦ãƒ¼ã‚¶ãƒ¼æ‹¡å¼µãƒ‡ãƒ¼ã‚¿ã‚’æ›¸ãè¾¼ã¿ã¾ã™ã€‚
     /// </summary>
     /// <remarks>
-    /// index‚Í0‚©‚ç3‚Ü‚Å‚Ì’l‚ğw’è‚µ‚Ü‚·B
-    /// value‚ÍƒfƒWƒ^ƒ‹‚Ìê‡0‚Ü‚½‚Í0ˆÈŠOAƒAƒiƒƒO‚Ìê‡0‚©‚ç100‚Ü‚Å‚Ì’l‚ğw’è‚µ‚Ü‚·B
+    /// indexã¯0ã‹ã‚‰3ã¾ã§ã®å€¤ã‚’æŒ‡å®šã—ã¾ã™ã€‚
+    /// valueã¯ãƒ‡ã‚¸ã‚¿ãƒ«ã®å ´åˆ0ã¾ãŸã¯0ä»¥å¤–ã€ã‚¢ãƒŠãƒ­ã‚°ã®å ´åˆ0ã‹ã‚‰100ã¾ã§ã®å€¤ã‚’æŒ‡å®šã—ã¾ã™ã€‚
     /// </remarks>
     /// <param name="index"></param>
     /// <param name="value"></param>
     void WriteValue( int index, uint8_t value );
 
     /// <summary>
-    /// ƒ†[ƒU[Šg’£ƒf[ƒ^‚ğ“Ç‚İ‚İ‚Ü‚·B
+    /// ãƒ¦ãƒ¼ã‚¶ãƒ¼æ‹¡å¼µãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
     /// </summary>
     /// <remarks>
-    /// index‚Í0‚©‚ç3‚Ü‚Å‚Ì’l‚ğw’è‚µ‚Ü‚·B
+    /// indexã¯0ã‹ã‚‰3ã¾ã§ã®å€¤ã‚’æŒ‡å®šã—ã¾ã™ã€‚
     /// </remarks>
     /// <param name="index"></param>
     /// <returns></returns>

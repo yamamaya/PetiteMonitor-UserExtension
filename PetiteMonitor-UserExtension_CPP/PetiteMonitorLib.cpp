@@ -1,45 +1,45 @@
-#include <windows.h>
+ï»¿#include <windows.h>
 #include <iostream>
 #include <conio.h>
 #include <thread>
 #include <memory>
 #include "PetiteMonitorLib.h"
 
-// ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 PetiteMonitorLib::PetiteMonitorLib() {
     pBuf = nullptr;
 }
 
-// ƒfƒXƒgƒ‰ƒNƒ^
+// ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 PetiteMonitorLib::~PetiteMonitorLib() {
     Disconnect();
 }
 
-// PetiteMonitor‚ÉÚ‘±
+// PetiteMonitorã«æ¥ç¶š
 void PetiteMonitorLib::Connect( int retryAttempts ) {
-    // Šù‚ÉÚ‘±Ï‚İ‚Ìê‡‚Í—áŠO‚ğ“Š‚°‚é
+    // æ—¢ã«æ¥ç¶šæ¸ˆã¿ã®å ´åˆã¯ä¾‹å¤–ã‚’æŠ•ã’ã‚‹
     if ( pBuf != nullptr ) {
         throw std::runtime_error( "Already connected" );
     }
 
-    // ƒƒ‚ƒŠ[ƒ}ƒbƒvƒgƒtƒ@ƒCƒ‹‚Ì–¼‘O
+    // ãƒ¡ãƒ¢ãƒªãƒ¼ãƒãƒƒãƒ—ãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã®åå‰
     const char* nameMMF = "PetiteMonitorUserExtension";
 
-    // ƒƒ‚ƒŠ[ƒ}ƒbƒvƒhƒtƒ@ƒCƒ‹‚Ìƒnƒ“ƒhƒ‹
+    // ãƒ¡ãƒ¢ãƒªãƒ¼ãƒãƒƒãƒ—ãƒ‰ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒãƒ³ãƒ‰ãƒ«
     HANDLE hMapFile = NULL;
 
-    // hMapFile‚ÌƒXƒR[ƒvƒK[ƒh
+    // hMapFileã®ã‚¹ã‚³ãƒ¼ãƒ—ã‚¬ãƒ¼ãƒ‰
     std::unique_ptr<void, decltype( &CloseHandle )> hMapFileGuard( hMapFile, CloseHandle );
-    // pBuf‚ÌƒXƒR[ƒvƒK[ƒh
+    // pBufã®ã‚¹ã‚³ãƒ¼ãƒ—ã‚¬ãƒ¼ãƒ‰
     auto pBufDeleter = [ this ]( uint8_t* ) { this->Disconnect(); };
     std::unique_ptr<uint8_t, decltype( pBufDeleter )> pBufGuard( pBuf, pBufDeleter );
 
-    // ƒƒ‚ƒŠ[ƒ}ƒbƒvƒgƒtƒ@ƒCƒ‹‚ğŠJ‚­
+    // ãƒ¡ãƒ¢ãƒªãƒ¼ãƒãƒƒãƒ—ãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã
     int retryCount = 0;
     while ( hMapFile == NULL ) {
         hMapFile = OpenFileMappingA( FILE_MAP_READ | FILE_MAP_WRITE, FALSE, nameMMF );
         if ( hMapFile == NULL ) {
-            // Œ©‚Â‚©‚ç‚È‚¢ê‡‚Í1s‘Ò‚Á‚ÄÄs
+            // è¦‹ã¤ã‹ã‚‰ãªã„å ´åˆã¯1så¾…ã£ã¦å†è©¦è¡Œ
             retryCount++;
             if ( retryAttempts >= 0 && retryCount > retryAttempts ) {
                 throw std::runtime_error( "Could not open file mapping" );
@@ -48,27 +48,27 @@ void PetiteMonitorLib::Connect( int retryAttempts ) {
         }
     }
 
-    // ƒƒ‚ƒŠ[ƒ}ƒbƒvƒgƒtƒ@ƒCƒ‹‚Ìƒrƒ…[‚ğì¬
+    // ãƒ¡ãƒ¢ãƒªãƒ¼ãƒãƒƒãƒ—ãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ“ãƒ¥ãƒ¼ã‚’ä½œæˆ
     pBuf = (uint8_t*)MapViewOfFile( hMapFile, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0 );
     if ( pBuf == nullptr ) {
         throw std::runtime_error( "Could not map view of file" );
     }
 
-    // ƒƒ‚ƒŠ[ƒ}ƒbƒvƒgƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é(‚à‚¤•s—v)
+    // ãƒ¡ãƒ¢ãƒªãƒ¼ãƒãƒƒãƒ—ãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹(ã‚‚ã†ä¸è¦)
     hMapFileGuard.reset();
 
-    // ƒVƒOƒlƒ`ƒƒ‚ğŠm”F
+    // ã‚·ã‚°ãƒãƒãƒ£ã‚’ç¢ºèª
     uint32_t signature = *(uint32_t*)pBuf;
     if ( signature != 0x2141594E ) {
-        // ƒVƒOƒlƒ`ƒƒ‚ªˆê’v‚µ‚È‚¢
+        // ã‚·ã‚°ãƒãƒãƒ£ãŒä¸€è‡´ã—ãªã„
         throw std::runtime_error( "Signature mismatch" );
     }
 
-    // pBufGuard‚ÌŠÇ—‚ğ‰ğœ
+    // pBufGuardã®ç®¡ç†ã‚’è§£é™¤
     pBufGuard.release();
 }
 
-// PetiteMonitor‚©‚çØ’f
+// PetiteMonitorã‹ã‚‰åˆ‡æ–­
 void PetiteMonitorLib::Disconnect() {
     if ( pBuf != nullptr ) {
         UnmapViewOfFile( pBuf );
@@ -76,7 +76,7 @@ void PetiteMonitorLib::Disconnect() {
     }
 }
 
-// ƒ†[ƒU[Šg’£ƒf[ƒ^‚ğ‘‚«‚İ
+// ãƒ¦ãƒ¼ã‚¶ãƒ¼æ‹¡å¼µãƒ‡ãƒ¼ã‚¿ã‚’æ›¸ãè¾¼ã¿
 void PetiteMonitorLib::WriteValue( int index, uint8_t value ) {
     if ( pBuf == nullptr ) {
         throw std::runtime_error( "Not connected" );
@@ -84,7 +84,7 @@ void PetiteMonitorLib::WriteValue( int index, uint8_t value ) {
     pBuf[ index + 4 ] = value;
 }
 
-// ƒ†[ƒU[Šg’£ƒf[ƒ^‚ğ“Ç‚İ‚İ
+// ãƒ¦ãƒ¼ã‚¶ãƒ¼æ‹¡å¼µãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿è¾¼ã¿
 uint8_t PetiteMonitorLib::ReadValue( int index ) {
     if ( pBuf == nullptr ) {
         throw std::runtime_error( "Not connected" );
